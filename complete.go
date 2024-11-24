@@ -20,10 +20,6 @@ func walk(node *kong.Node, visit func(*kong.Node)) error {
 		current := queue[0]
 		queue = queue[1:]
 
-		if current.Help != "" && !strings.HasSuffix(current.Help, ".") {
-			return fmt.Errorf("help needs to end in a dot")
-		}
-
 		visit(current)
 
 		save := current.Name
@@ -42,7 +38,7 @@ func walk(node *kong.Node, visit func(*kong.Node)) error {
 
 // Walk walks kong and prints out the completion yaml, name is the name of the command for which we generate the completion.
 // It also looks at the completion tag that holds how to list completion values.
-func Walk(name string, kong *kong.Kong) ([]byte, error) {
+func Walk(kong *kong.Kong) ([]byte, error) {
 	c := &comp{b: &bytes.Buffer{}}
 	c.completeFunc(kong.Model.Node)
 
