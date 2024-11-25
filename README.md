@@ -1,3 +1,7 @@
+
+> MOVED TO https://gitlab.science.ru.nl/cncz/go/-/tree/main/kongplete?ref_type=heads
+
+
 Package kongpleter generates a yaml description of the command line as described by Kong.
 This yaml can then be used by <https://github.com/miekg/gompletely> to generate specific completions.
 
