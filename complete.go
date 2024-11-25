@@ -10,9 +10,9 @@ import (
 	"github.com/alecthomas/kong"
 )
 
-func walk(node *kong.Node, visit func(*kong.Node)) error {
+func walk(node *kong.Node, visit func(*kong.Node)) {
 	if node == nil {
-		return nil
+		return
 	}
 
 	queue := []*kong.Node{node}
@@ -33,21 +33,33 @@ func walk(node *kong.Node, visit func(*kong.Node)) error {
 			queue = append(queue, child)
 		}
 	}
-	return nil
+	return
 }
 
-// Walk walks kong and prints out the completion yaml, name is the name of the command for which we generate the completion.
-// It also looks at the completion tag that holds how to list completion values.
-func Walk(kong *kong.Kong) ([]byte, error) {
+// Walk walks kong and prints out the completion yaml according to the kong Parser.
+// Hidden flags are skipped, and the extra tag "completion" is used to generate completions.
+//
+// completion may hold:
+//   - <file> (or any other bash compgen *action*)
+//   - a string not starting with <, which is interpreted as a shell command.
+//
+// Basic usage:
+//
+//	func (c Completion) BeforeReset(ctx *kong.Context, p *kong.Kong) error {
+//		out, _ := kongpleter.Walk(p)
+//		println(string(out))
+//	  ...
+//
+// Where BeforeReset is used to have a flag do something special, in this case output the
+// completion yaml.
+func Walk(kong *kong.Kong) []byte {
 	c := &comp{b: &bytes.Buffer{}}
 	c.completeFunc(kong.Model.Node)
 
 	for _, n := range kong.Model.Children {
-		if err := walk(n, c.completeFunc); err != nil {
-			return nil, err
-		}
+		walk(n, c.completeFunc)
 	}
-	return c.b.Bytes(), nil
+	return c.b.Bytes()
 }
 
 type comp struct {
@@ -87,6 +99,9 @@ func (c *comp) Positional(n *kong.Node) {
 
 func (c *comp) FlagSimple(n *kong.Node) {
 	for _, f := range n.Flags {
+		if f.Hidden {
+			continue
+		}
 		fmt.Fprintf(c.b, "- --%s[%s]\n", f.Name, f.Help)
 		if f.Tag.Negatable != "" {
 			fmt.Fprintf(c.b, "- --no-%s[%s]\n", f.Name, f.Help)
@@ -102,6 +117,9 @@ func (c *comp) FlagSimple(n *kong.Node) {
 func (c *comp) FlagComplexDetail(n *kong.Node) {
 	name := Path(n)
 	for _, f := range n.Flags {
+		if f.Hidden {
+			continue
+		}
 		comp := f.Tag.Get("completion")
 		if comp != "" {
 			fmt.Fprintf(c.b, "\n%s*--%s:\n", name, f.Name)
