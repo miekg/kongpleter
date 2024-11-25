@@ -1,6 +1,6 @@
-// Package kongpleter generates a yaml description of the command line as described by Kong.
+// Package kongplete generates a yaml description of the command line as described by Kong.
 // This yaml can then be used by github.com/miekg/gompletely to generate specific completions.
-package kongpleter
+package kongplete
 
 import (
 	"bytes"
